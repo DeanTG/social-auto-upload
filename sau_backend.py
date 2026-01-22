@@ -4,6 +4,7 @@ import sqlite3
 import threading
 import time
 import uuid
+import traceback
 from pathlib import Path
 from queue import Queue
 from flask_cors import CORS
@@ -467,49 +468,57 @@ def updateUserinfo():
 
 @app.route('/postVideoBatch', methods=['POST'])
 def postVideoBatch():
-    data_list = request.get_json()
+    try:
+        data_list = request.get_json()
 
-    if not isinstance(data_list, list):
-        return jsonify({"error": "Expected a JSON array"}), 400
-    for data in data_list:
-        # 从JSON数据中提取fileList和accountList
-        file_list = data.get('fileList', [])
-        account_list = data.get('accountList', [])
-        type = data.get('type')
-        title = data.get('title')
-        tags = data.get('tags')
-        category = data.get('category')
-        enableTimer = data.get('enableTimer')
-        if category == 0:
-            category = None
-        productLink = data.get('productLink', '')
-        productTitle = data.get('productTitle', '')
+        if not isinstance(data_list, list):
+            return jsonify({"error": "Expected a JSON array"}), 400
+        for data in data_list:
+            # 从JSON数据中提取fileList和accountList
+            file_list = data.get('fileList', [])
+            account_list = data.get('accountList', [])
+            type = data.get('type')
+            title = data.get('title')
+            tags = data.get('tags')
+            category = data.get('category')
+            enableTimer = data.get('enableTimer')
+            if category == 0:
+                category = None
+            productLink = data.get('productLink', '')
+            productTitle = data.get('productTitle', '')
 
-        videos_per_day = data.get('videosPerDay')
-        daily_times = data.get('dailyTimes')
-        start_days = data.get('startDays')
-        # 打印获取到的数据（仅作为示例）
-        print("File List:", file_list)
-        print("Account List:", account_list)
-        match type:
-            case 1:
-                return
-            case 2:
-                post_video_tencent(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
-                                   start_days)
-            case 3:
-                post_video_DouYin(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
-                          start_days, productLink, productTitle)
-            case 4:
-                post_video_ks(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
-                          start_days)
-    # 返回响应给客户端
-    return jsonify(
-        {
-            "code": 200,
-            "msg": None,
+            videos_per_day = data.get('videosPerDay')
+            daily_times = data.get('dailyTimes')
+            start_days = data.get('startDays')
+            # 打印获取到的数据（仅作为示例）
+            print("File List:", file_list)
+            print("Account List:", account_list)
+            match type:
+                case 1:
+                    return
+                case 2:
+                    post_video_tencent(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                                       start_days)
+                case 3:
+                    post_video_DouYin(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                              start_days, productLink, productTitle)
+                case 4:
+                    post_video_ks(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                              start_days)
+        # 返回响应给客户端
+        return jsonify(
+            {
+                "code": 200,
+                "msg": None,
+                "data": None
+            }), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({
+            "code": 500,
+            "msg": str(e),
             "data": None
-        }), 200
+        }), 500
 
 # Cookie文件上传API
 @app.route('/uploadCookie', methods=['POST'])

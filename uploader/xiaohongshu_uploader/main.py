@@ -122,7 +122,14 @@ class XiaoHongShuVideo(object):
         # 创建一个新的页面
         page = await context.new_page()
         # 访问指定的 URL
-        await page.goto("https://creator.xiaohongshu.com/publish/publish?from=homepage&target=video")
+        try:
+            await page.goto("https://creator.xiaohongshu.com/publish/publish?from=homepage&target=video", timeout=60000)
+        except Exception as e:
+            xiaohongshu_logger.error(f"[-] 页面加载失败，请检查网络或Cookie: {e}")
+            await context.close()
+            await browser.close()
+            return
+
         xiaohongshu_logger.info(f'[+]正在上传-------{self.title}.mp4')
         # 等待页面跳转到指定的 URL，没进入，则自动等待到超时
         xiaohongshu_logger.info(f'[-] 正在打开主页...')
@@ -175,7 +182,7 @@ class XiaoHongShuVideo(object):
             await page.keyboard.press("Delete")
             await page.keyboard.type(self.title)
             await page.keyboard.press("Enter")
-        css_selector = ".ql-editor" # 不能加上 .ql-blank 属性，这样只能获取第一次非空状态
+        css_selector = ".ProseMirror" # 不能加上 .ProseMirror 属性，这样只能获取第一次非空状态
         for index, tag in enumerate(self.tags, start=1):
             await page.type(css_selector, "#" + tag)
             await page.press(css_selector, "Space")
